@@ -17,8 +17,8 @@
     - name: Configurar named.conf.local
       copy:
         dest: /etc/bind/named.conf.local
-            content: |
-              zone "servicio.local" {
+        content: |
+          zone "servicio.local" {
                   type master;
                   file "db.servicio.local";
               };
