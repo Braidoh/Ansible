@@ -15,8 +15,8 @@
         state: started
 
     - name: Configurar named.conf.local
-          copy:
-            dest: /etc/bind/named.conf.local
+      blockinfile:
+        dest: /etc/bind/named.conf.local
             content: |
               zone "servicio.local" {
                   type master;
@@ -182,7 +182,7 @@
                  604800 )   ; Negative Cache TTL
           ;
           @      IN  NS  coche.concesionario.local.
-          coche    IN  A   10.0.2.5
+          coche    IN  A   10.0.2.6
 
     - name: Crear archivo de la zona escuela
       copy:
@@ -200,7 +200,7 @@
            604800 )   ; Negative Cache TTL
         ;
         @      IN  NS  campus.escuela.local.
-        campus  IN  A   10.0.2.6
+        campus  IN  A   10.0.2.7
 
     - name: Habilitar forwarders
       copy:

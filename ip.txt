@@ -8,8 +8,8 @@ DNS: 10.0.1.2
     doctor.local: 10.0.3.2
     paciente.local: 10.0.5.2
     visitante.local:  10.0.4.2
-    concesionario.local: 10.0.2.5
-    escuela.local: 10.0.2.6
+    concesionario.local: 10.0.2.6
+    escuela.local: 10.0.2.7
 Database: 10.0.2.2
 Webserver:  10.0.1.3
 Mail: 10.0.1.3
