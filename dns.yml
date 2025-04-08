@@ -1,5 +1,5 @@
 - name: DNS
-  hosts: bind
+  hosts: dns
   become: yes
   tasks:
     - name: Instalar bind9
@@ -22,7 +22,7 @@
                   type master;
                   file "db.servicio.local";
               };
-              
+
               zone "hospital.local" {
                   type master;
                   file "db.hospital.local";

@@ -1,5 +1,5 @@
 - name: Desplegar Pagina Web Hospital
-  hosts: website
+  hosts: webserver
   become: yes
   vars:
     repo_url: "https://github.com/Braidoh/hospital.git"

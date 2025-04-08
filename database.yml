@@ -1,7 +1,6 @@
 - name: Configurar MySQL en la máquina database
   hosts: database
   become: yes
-
   tasks:
     - name: Instalar MySQL Server y Cliente
       apt:
