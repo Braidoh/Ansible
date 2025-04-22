@@ -9,44 +9,44 @@
         dest: /etc/bind/named.conf.local
         content: |
           zone "servicio.local" {
-                  type master;
-                  file "db.servicio.local";
-              };
+            type master;
+            file "db.servicio.local";
+          };
 
-              zone "hospital.local" {
-                  type master;
-                  file "db.hospital.local";
-              };
+          zone "hospital.local" {
+            type master;
+            file "db.hospital.local";
+          };
 
-              zone "mail.local" {
-                  type master;
-                  file "db.mail.local";
-              };
+          zone "mail.local" {
+            type master;
+            file "db.mail.local";
+          };
 
-              zone "doctor.local" {
-                  type master;
-                  file "db.doctor.local";
-              };
+          zone "doctor.local" {
+            type master;
+            file "db.doctor.local";
+          };
 
-              zone "paciente.local" {
-                  type master;
-                  file "db.paciente.local";
-              };
+          zone "paciente.local" {
+            type master;
+            file "db.paciente.local";
+          };
 
-              zone "visitante.local" {
-                  type master;
-                  file "db.visitante.local";
-              };
+          zone "visitante.local" {
+            type master;
+            file "db.visitante.local";
+          };
 
-              zone "concesionario.local" {
-                  type master;
-                  file "db.concesionario.local";
-              };
+          zone "concesionario.local" {
+            type master;
+            file "db.concesionario.local";
+          };
 
-              zone "escuela.local" {
-                  type master;
-                  file "db.escuela.local";
-              };
+          zone "escuela.local" {
+            type master;
+            file "db.escuela.local";
+          };
 
     - name: Crear archivo de la zona servicio
       copy:
