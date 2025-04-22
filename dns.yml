@@ -8,12 +8,6 @@
         state: present
         update_cache: yes
 
-    - name: Iniciar y habilitar Bind9
-      systemd:
-        name: bind9
-        enabled: yes
-        state: started
-
     - name: Configurar named.conf.local
       copy:
         dest: /etc/bind/named.conf.local

@@ -44,13 +44,15 @@
         regexp: 'mysqli\("localhost",'
         replace: 'mysqli("{{ db_ip }}",'
       loop:
+        - inicio.php
+        - login.php
+        - session.php
+        - logout.php
         - admin.php
-        - blacklist.php
         - doctor.php
         - paciente.php
         - visitante.php
-        - save.php
-        - session.php
+        - save.php        
         - cita.php
 
     - name: Configuración para HTTPS permanente
