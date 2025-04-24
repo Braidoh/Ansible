@@ -12,16 +12,9 @@
         name: ssl
         state: present
 
-    - name: Clonar el repositorio del hospital (se crea la carpeta si no existe)
-      git:
-        repo: "{{ repo_url }}"
-        dest: "{{ document_root }}"
-        version: main
-        force: yes
-
     - name: Eliminar archivos no .php
-      shell: find "{{ document_root }}" -type f ! -name "*.php" -delete
-
+      shell: find "{{ document_root }}" -type f ! \( -name "*.php" -o -name "*.jpg" \) -delete
+      
     - name: Asegura que los archivos PHP usen la IP correcta de la base de datos
       replace:
         path: "{{ document_root }}/{{ item }}"
