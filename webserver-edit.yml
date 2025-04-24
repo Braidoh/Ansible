@@ -12,13 +12,7 @@
         name: ssl
         state: present
 
-    - name: Crear carpeta hospital en /var/www
-      file:
-        path: "{{ document_root }}"
-        state: directory
-        mode: '0755'
-
-    - name: Clonar el repositorio del hospital
+    - name: Clonar el repositorio del hospital (se crea la carpeta si no existe)
       git:
         repo: "{{ repo_url }}"
         dest: "{{ document_root }}"
