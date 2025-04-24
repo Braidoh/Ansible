@@ -14,23 +14,6 @@
 
     - name: Eliminar archivos no .php
       shell: find "{{ document_root }}" -type f ! \( -name "*.php" -o -name "*.jpg" \) -delete
-      
-    - name: Asegura que los archivos PHP usen la IP correcta de la base de datos
-      replace:
-        path: "{{ document_root }}/{{ item }}"
-        regexp: 'mysqli\("localhost",'
-        replace: 'mysqli("{{ db_ip }}",'
-      loop:
-        - inicio.php
-        - login.php
-        - session.php
-        - logout.php
-        - admin.php
-        - doctor.php
-        - paciente.php
-        - visitante.php
-        - save.php        
-        - cita.php
 
     - name: Configuración para HTTPS permanente
       copy:
