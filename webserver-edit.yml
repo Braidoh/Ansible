@@ -5,6 +5,18 @@
     repo_url: "https://github.com/Braidoh/hospital.git"
     db_ip: "10.0.2.3"
     document_root: "/var/www/hospital"
+    fichero_hosts: "127.0.0.1 admin.local doctor.local paciente.local visitante.local inicio.local login.local session.local logout.local save.local cita.local"
+    sitios:
+      - inicio
+      - login
+      - session
+      - logout
+      - admin
+      - doctor
+      - paciente
+      - visitante
+      - save.      
+      - cita
 
   tasks:
     - name: Asegurar que el módulo SSL esté habilitado
@@ -12,34 +24,62 @@
         name: ssl
         state: present
 
-    - name: Eliminar archivos no .php
-      shell: find "{{ document_root }}" -type f ! \( -name "*.php" -o -name "*.jpg" \) -delete
+    - name: Clonar el repositorio
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ document_root }}"
+        update: yes
 
-    - name: Configuración para HTTPS permanente
+    #- name: Eliminar archivos no .php
+    #  shell: find "{{ document_root }}" -type f ! \( -name "*.php" -o -name "*.jpg" \) -delete
+
+    # Codigo aquí
+
+    # Crear archivo de configuración para cada sitio (sites-available y sites-enabled)
+    - name: Archivo de configuración sites-available
       copy:
-        dest: /etc/apache2/sites-available/000-default.conf
+        dest: /etc/apache2/sites-available/{{ item }}.conf
         content: |
-          <VirtualHost *:80>
-              ServerName www.hospital.local
-              Redirect permanent / https://www.hospital.local/
+          <VirtualHost *:443>
+              ServerName {{ item }}.local
+              DocumentRoot {{ document_root }}
+              <Directory {{ document_root }}>
+                  Options Indexes FollowSymLinks
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+              DirectoryIndex {{ item }}.php
           </VirtualHost>
+      loop: "{{ sitios }}"
 
-          <IfModule mod_ssl.c>
-            <VirtualHost *:443>
-                ServerName www.hospital.local
-                DocumentRoot {{ document_root }}
-                <Directory {{ document_root }}>
-                    Options Indexes FollowSymLinks
-                    AllowOverride All
-                    Require all granted
-                </Directory>
-                SSLEngine on
-                SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
-                SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
-                ErrorLog ${APACHE_LOG_DIR}/https_error.log
-                CustomLog ${APACHE_LOG_DIR}/https_access.log combined
-            </VirtualHost>
-          </IfModule>
+    - name: Archivo de configuración sites-enabled    
+      copy:
+        dest: /etc/apache2/sites-enabled/{{ item }}.conf
+        content: |
+          <VirtualHost *:443>
+              ServerName {{ item }}.local
+              DocumentRoot {{ document_root }}
+              <Directory {{ document_root }}>
+                  Options Indexes FollowSymLinks
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+              DirectoryIndex {{ item }}.php
+          </VirtualHost>
+      loop: "{{ sitios }}"
+    
+    - name: Deshabilitar el sitio predeterminado
+      command: a2dissite 000-default.conf
+
+    - name: Habilitar cada sitio
+      command: a2ensite {{ item }}.conf
+      loop: "{{ sitios }}"
+
+    - name: Agregar entradas a /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "127.0.0.1 {{ fichero_hosts }}"
+        create: yes    
 
     - name: Reiniciar Apache y habilitar servicio
       systemd:
