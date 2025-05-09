@@ -4,7 +4,8 @@
   vars:
     repo_url: "https://github.com/Braidoh/hospital.git"
     db_ip: "10.0.2.3"
-    document_root: "/var/www/hospital"
+    document_root: "/var/www/"
+    domain : "10.0.1.3 www.hospital.local"
 
   tasks:
     - name: Instalar Apache y módulos necesarios
@@ -22,64 +23,79 @@
         name: ssl
         state: present
 
-    - name: Crear carpeta hospital en /var/www
-      file:
-        path: "{{ document_root }}"
-        state: directory
-        mode: '0755'
-
     - name: Clonar el repositorio del hospital
-      git:
-        repo: "{{ repo_url }}"
-        dest: "{{ document_root }}"
-        version: main
-        force: yes
+      command: git clone {{ repo_url }} {{ document_root }}
 
-    - name: Eliminar archivos no .php
-      shell: find "{{ document_root }}" -type f ! -name "*.php" -delete
+#    - name: Eliminar archivos no .php
+#      shell: find "{{ document_root }}" -type f ! -name "*.php" -delete
 
-    - name: Asegura que los archivos PHP usen la IP correcta de la base de datos
-      replace:
-        path: "{{ document_root }}/{{ item }}"
-        regexp: 'mysqli\("localhost",'
-        replace: 'mysqli("{{ db_ip }}",'
-      loop:
-        - inicio.php
-        - login.php
-        - session.php
-        - logout.php
-        - admin.php
-        - doctor.php
-        - paciente.php
-        - visitante.php
-        - save.php        
-        - cita.php
+    - name: Añadir hospital en apache2.conf
+      blockinfile:
+        path: /etc/apache2/apache2.conf
+        block: |
+          <Directory /var/www/hospital>
+            Options Indexes FollowSymLinks
+            AllowOverride All
+            Require all granted
+          </Directory>
 
-    - name: Configuración para HTTPS permanente
-      copy:
-        dest: /etc/apache2/sites-available/000-default.conf
-        content: |
+    - name: Archivo de configuración sites-available
+      blockinfile:
+        path: /etc/apache2/sites-available/hospital.conf
+        block: |
           <VirtualHost *:80>
-              ServerName www.hospital.local
-              Redirect permanent / https://www.hospital.local/
+            ServerName www.hospital.local
+            ServerAlias *.hospital.local
+            Redirect permanent / https://%{HTTP_HOST}/
           </VirtualHost>
 
-          <IfModule mod_ssl.c>
-            <VirtualHost *:443>
-                ServerName www.hospital.local
-                DocumentRoot {{ document_root }}
-                <Directory {{ document_root }}>
-                    Options Indexes FollowSymLinks
-                    AllowOverride All
-                    Require all granted
-                </Directory>
-                SSLEngine on
-                SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
-                SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
-                ErrorLog ${APACHE_LOG_DIR}/https_error.log
-                CustomLog ${APACHE_LOG_DIR}/https_access.log combined
-            </VirtualHost>
-          </IfModule>
+          <VirtualHost *:443>
+            ServerName hospital.local
+            ServerAlias *.hospital.local
+            DocumentRoot /var/www/hospital
+
+            SSLEngine on
+            SSLCertificateFile /etc/ssl/certs/hospital.crt
+            SSLCertificateKeyFile /etc/ssl/private/hospital.key
+
+            DirectoryIndex inicio.php
+
+            ErrorLog ${APACHE_LOG_DIR}/hospital_error.log
+            CustomLog ${APACHE_LOG_DIR}/hospital_access.log combined
+          </VirtualHost>
+      
+    - name: Archivo de configuración sites-enabled
+      copy:
+        src: /etc/apache2/sites-available/hospital.conf
+        dest: /etc/apache2/sites-enabled/hospital.conf
+        remote_src: yes
+
+    - name: Crear certificado autofirmado 
+      command: openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/hospital.key -out /etc/ssl/certs/hospital.crt -subj "/C=ES/ST=Barcelona/L=Barcelona/O=Hospital/CN=*.hospital.local"
+
+    - name: Habilitar los módulos necesarios
+      command: a2enmod rewrite
+
+    - name: Habilitar los módulos necesarios
+      command: a2enmod ssl
+    
+    - name: Deshabilitar el sitio predeterminado
+      command: a2dissite 000-default.conf
+
+    - name: Habilitar cada sitio
+      command: a2ensite hospital.conf    
+
+    - name: Agregar entradas a /etc/hosts (evita dependencias de DNS)
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ domain }}"
+        create: yes
+
+    - name: Definir ServerName global para evitar advertencia
+      lineinfile:
+        path: /etc/apache2/apache2.conf
+        line: "ServerName hospital.local"
+        create: yes
 
     - name: Reiniciar Apache y habilitar servicio
       systemd:

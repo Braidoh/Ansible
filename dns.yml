@@ -26,22 +26,7 @@
             type master;
             file "db.mail.local";
           };
-
-          zone "doctor.local" {
-            type master;
-            file "db.doctor.local";
-          };
-
-          zone "paciente.local" {
-            type master;
-            file "db.paciente.local";
-          };
-
-          zone "visitante.local" {
-            type master;
-            file "db.visitante.local";
-          };
-
+          
           zone "concesionario.local" {
             type master;
             file "db.concesionario.local";
@@ -78,15 +63,28 @@
         mode: '0644'
         content: |
           $TTL 604800
-          @  IN  SOA  www.hospital.local. root.hospital.local. (
+          @  IN  SOA  zona.hospital.local. root.hospital.local. (
                  2          ; Serial
                  604800     ; Refresh
                  86400      ; Retry
                  2419200    ; Expire
                  604800 )   ; Negative Cache TTL
           ;
-          @      IN  NS  www.hospital.local.
-          www    IN  A   10.0.1.3
+          @      IN  NS  zona.hospital.local.
+          zona    IN  A   10.0.1.3
+          www    IN  A  zona
+
+          inicio  IN  A   10.0.1.10
+          login   IN  A   10.0.1.10
+          session IN  A   10.0.1.10
+          logout  IN  A   10.0.1.10
+          admin  IN  A   10.0.1.10
+          doctor  IN  A   10.0.1.10
+          paciente  IN  A   10.0.1.10
+          visitante  IN  A   10.0.1.10
+          save  IN  A   10.0.1.10
+          cita  IN  A   10.0.1.10
+
 
     - name: Crear archivo de la zona mail
       copy:
@@ -105,60 +103,6 @@
           ;
           @      IN  NS  ada.mail.local.
           ada  IN  A   10.0.1.4
-
-    - name: Crear archivo de la zona doctor
-      copy:
-        dest: /var/cache/bind/db.doctor.local
-        owner: root
-        group: bind
-        mode: '0644'
-        content: |
-          $TTL 604800
-          @  IN  SOA  ada.doctor.local. root.doctor.local. (
-            2          ; Serial
-            604800     ; Refresh
-            86400      ; Retry
-            2419200    ; Expire
-            604800 )   ; Negative Cache TTL
-          ;
-          @      IN  NS  ada.doctor.local.
-          ada  IN  A   10.0.3.2
-
-    - name: Crear archivo de la zona paciente
-      copy:
-        dest: /var/cache/bind/db.paciente.local
-        owner: root
-        group: bind
-        mode: '0644'
-        content: |
-          $TTL 604800
-          @  IN  SOA  ada.paciente.local. root.paciente.local. (
-            2          ; Serial
-            604800     ; Refresh
-            86400      ; Retry
-            2419200    ; Expire
-            604800 )   ; Negative Cache TTL
-          ;
-          @      IN  NS  ada.paciente.local.
-          ada  IN  A   10.0.5.2
-
-    - name: Crear archivo de la zona visitante
-      copy:
-        dest: /var/cache/bind/db.visitante.local
-        owner: root
-        group: bind
-        mode: '0644'
-        content: |
-          $TTL 604800
-          @  IN  SOA  ada.visitante.local. root.visitante.local. (
-            2          ; Serial
-            604800     ; Refresh
-            86400      ; Retry
-            2419200    ; Expire
-            604800 )   ; Negative Cache TTL
-          ;
-          @      IN  NS  ada.visitante.local.
-          ada  IN  A   10.0.4.2
 
     - name: Crear archivo de zona directa para concesionario
       copy:

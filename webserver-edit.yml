@@ -5,24 +5,11 @@
     repo_url: "https://github.com/Braidoh/hospital.git"
     db_ip: "10.0.2.3"
     document_root: "/var/www/hospital"
-    fichero_hosts: "127.0.0.1 admin.local doctor.local paciente.local visitante.local inicio.local login.local session.local logout.local save.local cita.local"
-    sitios:
-      - inicio
-      - login
-      - session
-      - logout
-      - admin
-      - doctor
-      - paciente
-      - visitante
-      - save.      
-      - cita
-
+    hosts: "127.0.0.1 admin.local doctor.local paciente.local visitante.local inicio.local login.local session.local logout.local save.local cita.local"
+    
   tasks:
-    - name: Asegurar que el módulo SSL esté habilitado
-      apache2_module:
-        name: ssl
-        state: present
+    - name: Asegurar que el módulo SSL esté habilitado      
+      command: a2enmod ssl
 
     - name: Clonar el repositorio
       git:
@@ -38,47 +25,55 @@
     # Crear archivo de configuración para cada sitio (sites-available y sites-enabled)
     - name: Archivo de configuración sites-available
       copy:
-        dest: /etc/apache2/sites-available/{{ item }}.conf
+        dest: /etc/apache2/sites-available/hospital.conf
         content: |
-          <VirtualHost *:443>
-              ServerName {{ item }}.local
-              DocumentRoot {{ document_root }}
-              <Directory {{ document_root }}>
-                  Options Indexes FollowSymLinks
-                  AllowOverride All
-                  Require all granted
-              </Directory>
-              DirectoryIndex {{ item }}.php
+          <VirtualHost *:80>
+            ServerName hospital.local
+            ServerAlias *.hospital.local
+            Redirect permanent / https://%{HTTP_HOST}/
           </VirtualHost>
-      loop: "{{ sitios }}"
+
+          <VirtualHost *:443>
+            ServerName hospital.local
+            ServerAlias *.hospital.local
+
+            DocumentRoot /var/www/hospital
+
+            SSLEngine on
+            SSLCertificateFile /etc/ssl/certs/hospital.crt
+            SSLCertificateKeyFile /etc/ssl/private/hospital.key
+
+            <Directory /var/www/hospital>
+                Options +FollowSymLinks
+                AllowOverride All
+                Require all granted
+            </Directory>
+
+            # Redirige al archivo .php según el subdominio
+            RewriteEngine On
+            RewriteCond %{HTTP_HOST} ^([a-zA-Z0-9]+)\.hospital\.local$
+            RewriteRule ^$ /%1.php [L]
+
+            ErrorLog ${APACHE_LOG_DIR}/hospital_error.log
+            CustomLog ${APACHE_LOG_DIR}/hospital_access.log combined
+          </VirtualHost>
 
     - name: Archivo de configuración sites-enabled    
-      copy:
-        dest: /etc/apache2/sites-enabled/{{ item }}.conf
-        content: |
-          <VirtualHost *:443>
-              ServerName {{ item }}.local
-              DocumentRoot {{ document_root }}
-              <Directory {{ document_root }}>
-                  Options Indexes FollowSymLinks
-                  AllowOverride All
-                  Require all granted
-              </Directory>
-              DirectoryIndex {{ item }}.php
-          </VirtualHost>
-      loop: "{{ sitios }}"
+      command: sudo cp /etc/apache2/sites-available/hospital.conf /etc/apache2/sites-enabled/hospital.conf
     
     - name: Deshabilitar el sitio predeterminado
       command: a2dissite 000-default.conf
 
     - name: Habilitar cada sitio
-      command: a2ensite {{ item }}.conf
-      loop: "{{ sitios }}"
+      command: a2ensite hospital.conf
+
+    - name: Habilitar los módulos necesarios
+      command: a2enmod rewrite ssl
 
     - name: Agregar entradas a /etc/hosts
       lineinfile:
         path: /etc/hosts
-        line: "127.0.0.1 {{ fichero_hosts }}"
+        line: "127.0.0.1 {{ hosts }}"
         create: yes    
 
     - name: Reiniciar Apache y habilitar servicio
