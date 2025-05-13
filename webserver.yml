@@ -15,6 +15,7 @@
           - libapache2-mod-php
           - git
           - openssl
+          - mysql-client
         state: present
         update_cache: yes
 
@@ -27,7 +28,7 @@
       command: git clone {{ repo_url }} {{ document_root }}
 
 #    - name: Eliminar archivos no .php
-#      shell: find "{{ document_root }}" -type f ! -name "*.php" -delete
+#      command: remove hospital.sql inserts.sql
 
     - name: Añadir hospital en apache2.conf
       blockinfile:

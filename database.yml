@@ -112,13 +112,6 @@
             FOREIGN KEY (doctor) REFERENCES persona(id_persona)
           );
 
-          CREATE TABLE IF NOT EXISTS beeper (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            receptor VARCHAR(3),
-            mensaje TEXT,
-            FOREIGN KEY (receptor) REFERENCES persona(id_persona)
-          );
-
           CREATE TABLE IF NOT EXISTS parking (
             id INT AUTO_INCREMENT PRIMARY KEY,
             plaza INT,

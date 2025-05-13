@@ -63,28 +63,15 @@
         mode: '0644'
         content: |
           $TTL 604800
-          @  IN  SOA  zona.hospital.local. root.hospital.local. (
+          @  IN  SOA  www root.hospital (
                  2          ; Serial
                  604800     ; Refresh
                  86400      ; Retry
                  2419200    ; Expire
                  604800 )   ; Negative Cache TTL
           ;
-          @      IN  NS  zona.hospital.local.
-          zona    IN  A   10.0.1.3
-          www    IN  A  zona
-
-          inicio  IN  A   10.0.1.10
-          login   IN  A   10.0.1.10
-          session IN  A   10.0.1.10
-          logout  IN  A   10.0.1.10
-          admin  IN  A   10.0.1.10
-          doctor  IN  A   10.0.1.10
-          paciente  IN  A   10.0.1.10
-          visitante  IN  A   10.0.1.10
-          save  IN  A   10.0.1.10
-          cita  IN  A   10.0.1.10
-
+          @      IN  NS  wwww.hospital.local.
+          wwww.hospital.local.    IN  A   192.168.200.50
 
     - name: Crear archivo de la zona mail
       copy:
