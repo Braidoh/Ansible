@@ -16,6 +16,7 @@
           - git
           - openssl
           - mysql-client
+          - php8.3-mysqli
         state: present
         update_cache: yes
 
