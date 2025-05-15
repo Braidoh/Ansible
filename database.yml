@@ -1,18 +1,13 @@
 - name: Configurar MySQL en la máquina database
-  hosts: all
+  hosts: database
   become: yes
-
-  vars:
-    contrasenya: "1234"
-    db_name: "hospital"
-    sql_schema_file: "/tmp/hospital_schema.sql"
-
   tasks:
     - name: Instalar MySQL Server y Cliente
       apt:
         name: 
           - mysql-server
           - mysql-client
+          - git
         state: present
         update_cache: yes
 
@@ -23,107 +18,49 @@
         line: 'bind-address = 0.0.0.0'
         state: present
 
-    - name: Configurar contraseña de root (para MySQL 5.7+)
+    - name: Quitar la lentitud para conexiones remotas
+      become: true
+      lineinfile:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        insertafter: '^\[mysqld\]'
+        line: skip-name-resolve
+
+    - command: mkdir -p /hospital
+    - command: cd /hospital
+        
+    - name: Importar estructura de la base de datos directamente desde GitHub
+      shell: wget https://raw.github.com/Braidoh/hospital/main/hospital.sql -O hospital.sql
+
+    - name: Importar datos iniciales directamente desde GitHub
+      shell: wget https://raw.github.com/Braidoh/hospital/main/inserts.sql -O inserts.sql
+
+    - name: Crear base de datos con hospital.sql
+      mysql_db:
+        name: hospital
+        state: import
+        target: /hospital/hospital.sql
+        login_user: root
+        login_password: "1234"
+
+    - name: Poner datos con inserts.sql
+      mysql_db:
+        name: hospital
+        state: import
+        target: /hospital/inserts.sql
+        login_user: root
+        login_password: "1234"
+
+    - name: Crear usuario de base de datos
       mysql_user:
         name: root
-        host_all: true
-        password: "{{ contrasenya }}"
-        login_unix_socket: /var/run/mysqld/mysqld.sock
-        check_implicit_admin: true
-
-    - name: Crear base de datos hospital
-      mysql_db:
-        name: "{{ db_name }}"
+        password: "1234"
+        priv: 'hospital.*:ALL'
+        host: '10.0.1.3'
         state: present
-        encoding: utf8
-        collation: utf8_spanish_ci
         login_user: root
-        login_password: "{{ contrasenya }}"
+        login_password: "1234"
 
-    - name: Subir esquema SQL al servidor
-      copy:
-        dest: "{{ sql_schema_file }}"
-        content: |
-          USE hospital;
-
-          CREATE TABLE IF NOT EXISTS persona (
-            id_persona INT AUTO_INCREMENT PRIMARY KEY,
-            DNI VARCHAR(20) UNIQUE,
-            nombre VARCHAR(50),
-            apellido1 VARCHAR(50),
-            apellido2 VARCHAR(50),
-            fecha_nacimiento DATE,
-            direccion VARCHAR(100),
-            contacto VARCHAR(50)
-          );
-
-          CREATE TABLE IF NOT EXISTS usuario (
-            id_persona INT,
-            login VARCHAR(100) UNIQUE,
-            contrasenya VARCHAR(20),
-            categoria VARCHAR(8),
-            FOREIGN KEY (id_persona) REFERENCES persona(id_persona) ON DELETE CASCADE
-          );
-
-          CREATE TABLE IF NOT EXISTS paciente (
-            id_persona INT,
-            NSS VARCHAR(20),
-            doctor INT,
-            estado_ingresado BOOLEAN,
-            ubicacion VARCHAR(100),
-            familiares TEXT,
-            FOREIGN KEY (id_persona) REFERENCES persona(id_persona) ON DELETE CASCADE,
-            FOREIGN KEY (doctor) REFERENCES persona(id_persona)
-          );
-
-          CREATE TABLE IF NOT EXISTS doctor (
-            id_persona INT,
-            especialidad VARCHAR(100),
-            FOREIGN KEY (id_persona) REFERENCES persona(id_persona) ON DELETE CASCADE
-          );
-
-          CREATE TABLE IF NOT EXISTS historial (
-            id_paciente INT PRIMARY KEY,
-            grupo_sanguineo VARCHAR(3),
-            alergias TEXT,
-            FOREIGN KEY (id_paciente) REFERENCES persona(id_persona) ON DELETE CASCADE
-          );
-
-          CREATE TABLE IF NOT EXISTS ficha_medica (
-            id_ficha INT AUTO_INCREMENT PRIMARY KEY,
-            id_paciente INT,
-            doctor INT,
-            fecha DATE,
-            diagnostico VARCHAR(50),
-            tratamiento VARCHAR(50),
-            observaciones TEXT,
-            FOREIGN KEY (id_paciente) REFERENCES historial(id_paciente),
-            FOREIGN KEY (doctor) REFERENCES persona(id_persona)
-          );
-
-          CREATE TABLE IF NOT EXISTS cita (
-            id_cita INT AUTO_INCREMENT PRIMARY KEY,
-            paciente INT,
-            doctor INT,
-            fecha DATETIME,
-            motivo VARCHAR(50),
-            observaciones TEXT,
-            FOREIGN KEY (paciente) REFERENCES persona(id_persona),
-            FOREIGN KEY (doctor) REFERENCES persona(id_persona)
-          );
-
-          CREATE TABLE IF NOT EXISTS parking (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            plaza INT,
-            ocupada BOOLEAN,
-            matricula_coche VARCHAR(20)
-          );
-
-    - name: Ejecutar esquema SQL en la base de datos
-      mysql_db:
-        name: "{{ db_name }}"
-        state: import
-        target: "{{ sql_schema_file }}"
-        login_user: root
-        login_password: "{{ contrasenya }}"
-
+    - name: Reiniciar MySQL
+      systemd:
+        name: mysql
+        state: restarted
