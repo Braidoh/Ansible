@@ -25,14 +25,21 @@
         insertafter: '^\[mysqld\]'
         line: skip-name-resolve
 
-    - command: mkdir -p /hospital
-    - command: cd /hospital
+    - name: Crear directorio /hospital
+      file:
+        path: /hospital
+        state: directory
+        mode: '0755'
         
-    - name: Importar estructura de la base de datos directamente desde GitHub
-      shell: wget https://raw.github.com/Braidoh/hospital/main/hospital.sql -O hospital.sql
+    - name: Descargar hospital.sql desde GitHub
+      get_url:
+        url: https://raw.githubusercontent.com/Braidoh/hospital/main/hospital.sql
+        dest: /hospital/hospital.sql
 
-    - name: Importar datos iniciales directamente desde GitHub
-      shell: wget https://raw.github.com/Braidoh/hospital/main/inserts.sql -O inserts.sql
+    - name: Descargar inserts.sql desde GitHub
+      get_url:
+        url: https://raw.githubusercontent.com/Braidoh/hospital/main/inserts.sql
+        dest: /hospital/inserts.sql
 
     - name: Crear base de datos con hospital.sql
       mysql_db:
